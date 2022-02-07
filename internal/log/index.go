@@ -48,6 +48,7 @@ func newIndex(f *os.File, c Config) (*index, error) {
 
 // Read takes in an offset (in) and returns the associated record's offset and position in the store.
 // Offset is the number corresponding to the record.
+// The reason we use uint32 for out is to save 4 bytes per index entry
 func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 	if i.size == 0 {
 		return 0, 0, io.EOF
@@ -67,7 +68,7 @@ func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 	return out, pos, nil
 }
 
-// Write appends off and pos to the index.
+// Write appends offset and pos to the index.
 func (i *index) Write(off uint32, pos uint64) error {
 	if uint64(len(i.mmap)) < i.size+width {
 		return io.EOF
@@ -94,4 +95,8 @@ func (i *index) Close() error {
 		return err
 	}
 	return i.file.Close()
+}
+
+func (i *index) Name() string {
+	return i.file.Name()
 }
