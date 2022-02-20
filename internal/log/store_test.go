@@ -63,7 +63,7 @@ func testReadAt(t *testing.T, s *store) {
 
 		off += int64(n)
 
-		// get size of record data by converting the bytes in lenbs to uint64
+		// get size of record data by converting the value of the bytes in lenbs to uint64
 		lenRecordData := enc.Uint64(lenbs)
 		rd := make([]byte, lenRecordData)
 		n, err = s.ReadAt(rd, off)

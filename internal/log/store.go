@@ -29,7 +29,7 @@ type store struct {
 
 // Append writes the bytes in p into the store.
 // It returns num bytes written (inclusive of record length),
-// the position which we started appending, and error if exists.
+// the position which we started appending (i.e. the start of the record in the store), and error if exists.
 func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -43,34 +43,34 @@ func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 		return 0, 0, err
 	}
 
-	// nn is the number of bytes written to s.buf from p
-	nn, err := s.buf.Write(p)
+	// write from p into s.buf
+	numBytesWritten, err := s.buf.Write(p)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	nn += lenNumBytes
-	s.size += uint64(nn)
-	return uint64(nn), pos, nil
+	numBytesWritten += lenNumBytes
+	s.size += uint64(numBytesWritten)
+	return uint64(numBytesWritten), pos, nil
 }
 
 // Read returns the record data stored at the given position given a pos.
-// pos is the index at which the record starts.
+// pos is the byte at which the record starts.
 func (s *store) Read(pos uint64) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// flush the buffer to prevent the case where we read a record that the buffer has not flushed to disk
+	// flush the buffer into the underlying writer (the file)
+	// to prevent the case where we read a record that the buffer has not flushed to disk
 	if err := s.buf.Flush(); err != nil {
 		return nil, err
 	}
 
 	size := make([]byte, lenNumBytes)
-	// read record size from file, where size is a slice of bytes
+	// read record size from file, where size is a slice of bytes represented in big endian encoding
 	if _, err := s.file.ReadAt(size, int64(pos)); err != nil {
 		return nil, err
 	}
-	// convert the size, represented as slice of bytes, into int64
 	recordData := make([]byte, enc.Uint64(size))
 
 	// read record from file into recordData (byte slice)
@@ -83,6 +83,8 @@ func (s *store) Read(pos uint64) ([]byte, error) {
 // ReadAt reads len(p) bytes into p starting from the given offset in the store's file.
 // It returns the number of bytes n read into p, if n < len(p), an error will be returned.
 // It implements io.ReaderAt.
+// todo: check whether param should be called offset or pos.
+//  offset is the unique index/id of the record, while pos is the start byte of the record
 func (s *store) ReadAt(p []byte, off int64) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
