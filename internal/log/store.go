@@ -61,7 +61,7 @@ func (s *store) Read(pos uint64) ([]byte, error) {
 	defer s.mu.Unlock()
 
 	// flush the buffer into the underlying writer (the file)
-	// to prevent the case where we read a record that the buffer has not flushed to disk
+	// in case where we are trying to read a record that the buffer has not flushed to disk.
 	if err := s.buf.Flush(); err != nil {
 		return nil, err
 	}
@@ -80,18 +80,16 @@ func (s *store) Read(pos uint64) ([]byte, error) {
 	return recordData, nil
 }
 
-// ReadAt reads len(p) bytes into p starting from the given offset in the store's file.
+// ReadAt reads len(p) bytes into p starting from the given pos in the store's file.
 // It returns the number of bytes n read into p, if n < len(p), an error will be returned.
 // It implements io.ReaderAt.
-// todo: check whether param should be called offset or pos.
-//  offset is the unique index/id of the record, while pos is the start byte of the record
-func (s *store) ReadAt(p []byte, off int64) (int, error) {
+func (s *store) ReadAt(p []byte, pos int64) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if err := s.buf.Flush(); err != nil {
 		return 0, err
 	}
-	return s.file.ReadAt(p, off)
+	return s.file.ReadAt(p, pos)
 }
 
 // Close persists any data before closing the file.

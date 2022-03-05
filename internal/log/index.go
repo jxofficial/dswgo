@@ -7,8 +7,8 @@ import (
 	"github.com/tysonmote/gommap"
 )
 
-// offset is the index of the record i.e., the number corresponding to the record.
-// position is the actual starting byte of the record.
+// offset is the index of the store record i.e., the number corresponding to the store record.
+// position is the actual starting byte of the record in the store file.
 
 var (
 	offWidth uint64 = 4
@@ -17,12 +17,13 @@ var (
 	width = offWidth + posWidth
 )
 
-// index contains a file, which records the indexes of each record.
-// Each record is made up of the record's offset (record number) and its position (the actual byte it starts at).
+// index contains a file, which holds the indexes of each record.
+// Each index is made up of the store record's offset (record number) and its position
+// (the actual byte the record starts at in the store file).
 type index struct {
 	file *os.File
 	mmap gommap.MMap
-	size uint64 // size = max offset/index * width
+	size uint64 // size = max record offset * width
 }
 
 func newIndex(f *os.File, c Config) (*index, error) {
@@ -48,7 +49,7 @@ func newIndex(f *os.File, c Config) (*index, error) {
 
 // Read takes in an offset (in) and returns the associated record's offset and position in the store.
 // Offset is the number corresponding to the record.
-// The reason we use uint32 for out is to save 4 bytes per index entry
+// We use uint32 for out to save 4 bytes per index entry.
 func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 	if i.size == 0 {
 		return 0, 0, io.EOF
@@ -90,7 +91,8 @@ func (i *index) Close() error {
 		return err
 	}
 
-	// the file has blank space, the last "index" recorded is not at the last 12 bytes of the file.
+	// the file has blank space due to the memory map,
+	// the last index recorded is not at the last 12 bytes of the file.
 	if err := i.file.Truncate(int64(i.size)); err != nil {
 		return err
 	}

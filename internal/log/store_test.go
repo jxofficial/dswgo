@@ -54,24 +54,24 @@ func testRead(t *testing.T, s *store) {
 
 func testReadAt(t *testing.T, s *store) {
 	t.Helper()
-	for i, off := uint64(1), int64(0); i < 4; i++ {
+	for i, pos := uint64(1), int64(0); i < 4; i++ {
 		// read length into lenbs
 		lenbs := make([]byte, lenNumBytes)
-		n, err := s.ReadAt(lenbs, off) // n should be 8 bytes
+		n, err := s.ReadAt(lenbs, pos) // n should be 8 bytes
 		require.NoError(t, err)
 		require.Equal(t, lenNumBytes, n)
 
-		off += int64(n)
+		pos += int64(n)
 
 		// get size of record data by converting the value of the bytes in lenbs to uint64
 		lenRecordData := enc.Uint64(lenbs)
 		rd := make([]byte, lenRecordData)
-		n, err = s.ReadAt(rd, off)
+		n, err = s.ReadAt(rd, pos)
 		require.NoError(t, err)
 		require.Equal(t, recordData, rd)
 		require.Equal(t, int(lenRecordData), n)
 
-		off += int64(n)
+		pos += int64(n)
 	}
 }
 
