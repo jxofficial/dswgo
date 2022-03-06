@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path"
+
+	"github.com/golang/protobuf/proto"
+
+	api "github.com/jxofficial/proglog/api/v1"
 )
 
-// offset is unique identifier of a record which starts consecutively from 0.
+// offset starts consecutively from 0, and is the unique identifier of a record.
 
 type segment struct {
 	store *store
@@ -15,6 +19,30 @@ type segment struct {
 	// nextOffset refers to offset of the next record to be added.
 	baseOffset, nextOffset uint64
 	config                 Config
+}
+
+func (s *segment) Append(record *api.Record) (offset uint64, err error) {
+	curr := s.nextOffset
+	record.Offset = curr
+
+	p, err := proto.Marshal(record)
+	if err != nil {
+		return 0, err
+	}
+
+	_, pos, err := s.store.Append(p)
+	if err != nil {
+		return 0, err
+	}
+
+	indexRelativeOffset := s.nextOffset - s.baseOffset
+	err = s.index.Write(uint32(indexRelativeOffset), pos)
+	if err != nil {
+		return 0, err
+	}
+
+	s.nextOffset++
+	return curr, nil
 }
 
 func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
