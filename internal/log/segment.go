@@ -45,6 +45,53 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 	return curr, nil
 }
 
+func (s *segment) Read(off uint64) (*api.Record, error) {
+	indexRelativeOffset := int64(off - s.baseOffset)
+	_, pos, err := s.index.Read(indexRelativeOffset)
+	if err != nil {
+		return nil, err
+	}
+	p, err := s.store.Read(pos)
+	if err != nil {
+		return nil, err
+	}
+	record := &api.Record{}
+	err = proto.Unmarshal(p, record)
+	return record, err
+}
+
+// IsMaxed returns whether the segment has reached its max size
+// which occurs when either the index or the store cannot hold any more bytes.
+func (s *segment) IsMaxed() bool {
+	return s.store.size >= s.config.Segment.MaxStoreBytes ||
+		s.index.size >= s.config.Segment.MaxIndexBytes
+}
+
+func (s *segment) Remove() error {
+	if err := s.Close(); err != nil {
+		return err
+	}
+	if err := os.Remove(s.index.Name()); err != nil {
+		return err
+	}
+	if err := os.Remove(s.store.Name()); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Close closes the index and store files and flushes the data into persistent storage,
+// i.e. the respective index and store files.
+func (s *segment) Close() error {
+	if err := s.index.Close(); err != nil {
+		return err
+	}
+	if err := s.store.Close(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 	s := &segment{
 		baseOffset: baseOffset,
@@ -91,4 +138,14 @@ func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 	}
 
 	return s, nil
+}
+
+// nearestMultiple returns the nearest and lesser multiple of k in j
+// e.g. nearestMultiple(9,4) returns 8.
+func nearestMultiple(j, k uint64) uint64 {
+	if j >= 0 {
+		return (j / k) * k
+	}
+	// todo: figure out the logic behind this
+	return ((j - k + 1) / k) * k
 }

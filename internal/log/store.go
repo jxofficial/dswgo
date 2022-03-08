@@ -102,6 +102,10 @@ func (s *store) Close() error {
 	return s.file.Close()
 }
 
+func (s *store) Name() string {
+	return s.file.Name()
+}
+
 func newStore(f *os.File) (*store, error) {
 	// get file's current size, in case the file already contains data
 	fi, err := os.Stat(f.Name())
