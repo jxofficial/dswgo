@@ -15,8 +15,8 @@ import (
 type segment struct {
 	store *store
 	index *index
-	// if baseOffset = x, it means the store holds records starting from x.
-	// nextOffset refers to offset of the next record to be added.
+	// if baseOffset = x, it means the store for this segment holds records starting from x.
+	// nextOffset refers to offset of the next record to be added to this segment's store.
 	baseOffset, nextOffset uint64
 	config                 Config
 }
@@ -45,6 +45,7 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 	return curr, nil
 }
 
+// Read takes in the segment's index's relative offset and returns the corresponding *api.Record.
 func (s *segment) Read(off uint64) (*api.Record, error) {
 	indexRelativeOffset := int64(off - s.baseOffset)
 	_, pos, err := s.index.Read(indexRelativeOffset)
@@ -142,6 +143,7 @@ func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 
 // nearestMultiple returns the nearest and lesser multiple of k in j
 // e.g. nearestMultiple(9,4) returns 8.
+// k is assumed to be positive and nonzero.
 func nearestMultiple(j, k uint64) uint64 {
 	if j >= 0 {
 		return (j / k) * k

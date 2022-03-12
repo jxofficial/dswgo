@@ -55,7 +55,7 @@ func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 }
 
 // Read returns the record data stored at the given position given a pos.
-// pos is the byte at which the record starts.
+// pos is the byte at which the record starts in the store.
 func (s *store) Read(pos uint64) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
