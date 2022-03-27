@@ -22,13 +22,13 @@ type segment struct {
 	config                 Config
 }
 
-// Append appends a record to the store and appends the corresponding index entry,
-// and returns the next offset, and err if any.
-func (s *segment) Append(record *api.Record) (offset uint64, err error) {
+// Append appends a record to the store and writes the corresponding index entry.
+// It returns the offset of the appended record, and err if any.
+func (s *segment) Append(r *api.Record) (offset uint64, err error) {
 	curr := s.nextOffset
-	record.Offset = curr
+	r.Offset = curr
 
-	p, err := proto.Marshal(record)
+	p, err := proto.Marshal(r)
 	if err != nil {
 		return 0, err
 	}
