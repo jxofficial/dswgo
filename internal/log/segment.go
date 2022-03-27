@@ -10,17 +10,20 @@ import (
 	api "github.com/jxofficial/proglog/api/v1"
 )
 
-// offset starts consecutively from 0, and is the unique identifier of a record.
+// offset starts from 0 and increments consecutively. It is a unique identifier of a record.
 
 type segment struct {
 	store *store
 	index *index
-	// if baseOffset = x, it means the store for this segment holds records starting from x.
+	// if baseOffset = x, it means the store for this segment holds records
+	// with record numbers starting from x. i.e., it is the offset from the base store record (0),
 	// nextOffset refers to offset of the next record to be added to this segment's store.
 	baseOffset, nextOffset uint64
 	config                 Config
 }
 
+// Append appends a record to the store and appends the corresponding index entry,
+// and returns the next offset, and err if any.
 func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 	curr := s.nextOffset
 	record.Offset = curr

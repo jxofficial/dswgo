@@ -29,7 +29,8 @@ type store struct {
 
 // Append writes the bytes in p into the store.
 // It returns num bytes written (inclusive of record length),
-// the position which we started appending (i.e. the starting byte of the record in the store), and error if exists.
+// the position which we started appending (i.e. the starting byte of the record in the store),
+// and error if exists.
 func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
