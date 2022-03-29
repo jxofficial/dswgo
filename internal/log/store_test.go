@@ -11,7 +11,7 @@ import (
 var (
 	recordData = []byte("hello world")
 	// recordLen is length of entire record, including the len prefix.
-	recordLen = uint64(len(recordData)) + lenNumBytes
+	recordLen = uint64(len(recordData)) + storeRecordLenNumBytes
 )
 
 func TestStoreAppendRead(t *testing.T) {
@@ -56,10 +56,10 @@ func testReadAt(t *testing.T, s *store) {
 	t.Helper()
 	for i, pos := uint64(1), int64(0); i < 4; i++ {
 		// read length into lenbs
-		lenbs := make([]byte, lenNumBytes)
+		lenbs := make([]byte, storeRecordLenNumBytes)
 		n, err := s.ReadAt(lenbs, pos) // n should be 8 bytes
 		require.NoError(t, err)
-		require.Equal(t, lenNumBytes, n)
+		require.Equal(t, storeRecordLenNumBytes, n)
 
 		pos += int64(n)
 

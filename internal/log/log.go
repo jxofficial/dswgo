@@ -16,7 +16,10 @@ import (
 
 type Log struct {
 	// Dir stores the segments
-	// todo: give example of store and index file names
+	// example of segments (files in Dir)
+	// 0.store, 0.index, 3.store, ...
+	// in this case, the first store file has records 0-2,
+	// and the second store has records with offset 3 onwards.
 	Dir string
 	Config
 	mu            sync.RWMutex
@@ -151,7 +154,7 @@ func (l *Log) Truncate(lowest uint64) error {
 }
 
 // Reader returns a Reader that is a sequential concatenation of all the log's segments' stores.
-// The reader is used to read the entire log.
+// The Reader is used to read the entire log.
 func (l *Log) Reader() io.Reader {
 	l.mu.RLock()
 	defer l.mu.RUnlock()

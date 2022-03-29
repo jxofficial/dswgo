@@ -16,7 +16,7 @@ var (
 )
 
 const (
-	lenNumBytes = 8
+	storeRecordLenNumBytes = 8
 )
 
 // store implements two methods to append and read bytes to and from the file
@@ -50,7 +50,7 @@ func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 		return 0, 0, err
 	}
 
-	numBytesWritten += lenNumBytes
+	numBytesWritten += storeRecordLenNumBytes
 	s.size += uint64(numBytesWritten)
 	return uint64(numBytesWritten), pos, nil
 }
@@ -67,7 +67,7 @@ func (s *store) Read(pos uint64) ([]byte, error) {
 		return nil, err
 	}
 
-	size := make([]byte, lenNumBytes)
+	size := make([]byte, storeRecordLenNumBytes)
 	// read record size from file, where size is a slice of bytes represented in big endian encoding
 	if _, err := s.file.ReadAt(size, int64(pos)); err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (s *store) Read(pos uint64) ([]byte, error) {
 	recordData := make([]byte, enc.Uint64(size))
 
 	// read record from file into recordData (byte slice)
-	if _, err := s.file.ReadAt(recordData, int64(pos+lenNumBytes)); err != nil {
+	if _, err := s.file.ReadAt(recordData, int64(pos+storeRecordLenNumBytes)); err != nil {
 		return nil, err
 	}
 	return recordData, nil

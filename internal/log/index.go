@@ -23,7 +23,9 @@ var (
 type index struct {
 	file *os.File
 	mmap gommap.MMap
-	size uint64 // size = max record offset * indexEntryWidth
+	// size is directly proportional to the current max store record offset,
+	// where size = current max store record offset * indexEntryWidth
+	size uint64
 }
 
 func newIndex(f *os.File, c Config) (*index, error) {
