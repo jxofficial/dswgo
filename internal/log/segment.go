@@ -147,11 +147,12 @@ func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 
 // nearestMultiple returns the nearest and lesser multiple of k in j
 // e.g. nearestMultiple(9,4) returns 8.
-// k is assumed to be positive and nonzero.
+// k is assumed to be positive (non-zero).
 func nearestMultiple(j, k uint64) uint64 {
 	if j >= 0 {
 		return (j / k) * k
 	}
 	// todo: figure out the logic behind this
+	// given that both j and k are uint, this condition should never be reached.
 	return ((j - k + 1) / k) * k
 }

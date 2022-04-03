@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -79,7 +78,7 @@ func (l *Log) Read(off uint64) (*api.Record, error) {
 	// The second condition technically should not happen.
 	// It means that off is out of bounds of the segment.
 	if segment == nil || segment.nextOffset <= off {
-		return nil, fmt.Errorf("offset out of range: %d", off)
+		return nil, api.ErrOffsetOutOfRange{Offset: off}
 	}
 	return segment.Read(off)
 }
