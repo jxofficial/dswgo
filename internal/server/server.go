@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 
+	"google.golang.org/grpc"
+
 	api "github.com/jxofficial/proglog/api/v1"
 )
 
@@ -17,13 +19,17 @@ type CommitLog interface {
 
 type grpcServer struct {
 	*Config
+	api.UnimplementedLogServer
 }
 
-func newgrpcServer(c *Config) (srv *grpcServer, err error) {
-	srv = &grpcServer{
-		Config: c,
+func NewGRPCServer(c *Config) (*grpc.Server, error) {
+	gsrv := grpc.NewServer()
+	srv, err := newgrpcServer(c)
+	if err != nil {
+		return nil, err
 	}
-	return srv, nil
+	api.RegisterLogServer(gsrv, srv)
+	return gsrv, nil
 }
 
 func (s *grpcServer) Produce(ctx context.Context, req *api.ProduceRequest) (
@@ -93,4 +99,11 @@ func (s *grpcServer) ConsumeStream(req *api.ConsumeRequest, stream api.Log_Consu
 			}
 		}
 	}
+}
+
+func newgrpcServer(c *Config) (srv *grpcServer, err error) {
+	srv = &grpcServer{
+		Config: c,
+	}
+	return srv, nil
 }

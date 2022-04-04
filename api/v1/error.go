@@ -26,7 +26,6 @@ func (e ErrOffsetOutOfRange) GRPCStatus() *status.Status {
 	return stWithDetails
 }
 
-// todo: implement this
 func (e ErrOffsetOutOfRange) Error() string {
 	return e.GRPCStatus().Err().Error()
 }
