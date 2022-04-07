@@ -29,7 +29,6 @@ message ConsumeRequest {
 }
 
 message ConsumeResponse {
-  // todo: figure out why this is 2
-  Record record = 2;
+  Record record = 1;
 }
 
