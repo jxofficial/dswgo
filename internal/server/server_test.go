@@ -34,8 +34,8 @@ func TestServer(t *testing.T) {
 func testProduceConsume(t *testing.T, client api.LogClient, config *Config) {
 	ctx := context.Background()
 	want := &api.Record{
-		Value:  []byte("hello world"),
-		Offset: 0,
+		Value: []byte("hello world"),
+		// the log will assign the correct offset to the record in segment.Append
 	}
 	produce, err := client.Produce(ctx, &api.ProduceRequest{Record: want})
 	require.NoError(t, err)
@@ -43,8 +43,25 @@ func testProduceConsume(t *testing.T, client api.LogClient, config *Config) {
 	consume, err := client.Consume(ctx, &api.ConsumeRequest{Offset: produce.Offset})
 	require.NoError(t, err)
 	require.Equal(t, want.Value, consume.Record.Value)
+	// to be pedantic, produce.Offset should be treated as the source of truth for the record's offset.
+
+	// the `want` Record instance is not the same as the `consume.Record` instance.
+	// because `Segment.Append` assigns the correct offset to `want.Offset`, and then
+	// appends the marshalled bytes of `want` to the store.
+	// the store bytes will be unmarshalled into a new instance in `Segment.Read`.
+
+	// so here, we are essentially checking that `segment.Append` assigns the correct value of offset to `want`.
 	require.Equal(t, want.Offset, consume.Record.Offset)
 }
+
+//
+// func testConsumePastBoundary(t *testing.T, client api.LogClient, config *Config) {
+// 	ctx := context.Background()
+// 	produce, err := client.Produce(ctx, &api.ProduceRequest{
+// 		Record: &api.Record{
+// 			Value: []byte("hello world"),
+// 		}})
+// }
 
 func setupTest(t *testing.T, fn func(*Config)) (
 	client api.LogClient,

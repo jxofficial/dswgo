@@ -16,9 +16,9 @@ type segment struct {
 	store *store
 	index *index
 	// if baseOffset = x, it means the store for this segment holds records
-	// with record numbers starting from x. i.e., it is the offset from the base store record (0),
+	// with record numbers starting from x. i.e., it is the offset from the first store record (offset 0),
 	// nextOffset refers to offset of the next record to be added to this segment's store,
-	// also with reference to the base store record (0).
+	// also with reference to the first store record (offset 0).
 	baseOffset, nextOffset uint64
 	config                 Config
 }
