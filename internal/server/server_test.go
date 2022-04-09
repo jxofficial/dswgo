@@ -94,7 +94,7 @@ func testProduceConsumeStream(t *testing.T, client api.LogClient, config *Config
 			resp, err := stream.Recv()
 			require.NoError(t, err)
 			if resp.Offset != uint64(o) {
-				t.Fatalf(" got offset: %d, want: %d", resp.Offset, o)
+				t.Fatalf("got offset: %d, want: %d", resp.Offset, o)
 			}
 		}
 	}
@@ -113,7 +113,6 @@ func testProduceConsumeStream(t *testing.T, client api.LogClient, config *Config
 			})
 		}
 	}
-
 }
 
 func setupTest(t *testing.T, fn func(*Config)) (

@@ -97,6 +97,7 @@ func (s *grpcServer) ConsumeStream(req *api.ConsumeRequest, stream api.Log_Consu
 			if err != nil {
 				return err
 			}
+			req.Offset++
 		}
 	}
 }
