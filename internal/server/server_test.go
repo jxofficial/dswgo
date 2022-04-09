@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 
 	api "github.com/jxofficial/proglog/api/v1"
 	"github.com/jxofficial/proglog/internal/log"
@@ -19,7 +20,9 @@ func TestServer(t *testing.T) {
 		client api.LogClient,
 		config *Config,
 	){
-		"produce/consume a message to/from the log succeeds": testProduceConsume,
+		"produce/consume a message to/from the log succeeds":                                    testProduceConsume,
+		"consume past boundary returns nil ConsumeResponse and error with expected status code": testConsumePastBoundary,
+		"consume stream returns records in stream":                                              testProduceConsumeStream,
 	}
 
 	for scenario, fn := range tt {
@@ -53,15 +56,65 @@ func testProduceConsume(t *testing.T, client api.LogClient, config *Config) {
 	// so here, we are essentially checking that `segment.Append` assigns the correct value of offset to `want`.
 	require.Equal(t, want.Offset, consume.Record.Offset)
 }
+func testConsumePastBoundary(t *testing.T, client api.LogClient, config *Config) {
+	ctx := context.Background()
+	produce, err := client.Produce(ctx, &api.ProduceRequest{
+		Record: &api.Record{
+			Value: []byte("hello world"),
+		}})
+	require.NoError(t, err)
 
-//
-// func testConsumePastBoundary(t *testing.T, client api.LogClient, config *Config) {
-// 	ctx := context.Background()
-// 	produce, err := client.Produce(ctx, &api.ProduceRequest{
-// 		Record: &api.Record{
-// 			Value: []byte("hello world"),
-// 		}})
-// }
+	consume, err := client.Consume(ctx, &api.ConsumeRequest{
+		Offset: produce.Offset + 1,
+	})
+	if consume != nil {
+		t.Fatal("consume not nil")
+	}
+	got := status.Code(err)
+	want := status.Code(api.ErrOffsetOutOfRange{}.GRPCStatus().Err())
+	if got != want {
+		t.Fatalf("got err: %v, want: %v", got, want)
+	}
+}
+
+func testProduceConsumeStream(t *testing.T, client api.LogClient, config *Config) {
+	ctx := context.Background()
+	records := []*api.Record{{
+		Value: []byte("first message"),
+	}, {
+		Value: []byte("second message"),
+	}}
+
+	{
+		stream, err := client.ProduceStream(ctx)
+		require.NoError(t, err)
+		for o, r := range records {
+			err = stream.Send(&api.ProduceRequest{Record: r})
+			require.NoError(t, err)
+			resp, err := stream.Recv()
+			require.NoError(t, err)
+			if resp.Offset != uint64(o) {
+				t.Fatalf(" got offset: %d, want: %d", resp.Offset, o)
+			}
+		}
+	}
+
+	{
+		stream, err := client.ConsumeStream(ctx, &api.ConsumeRequest{Offset: 0})
+		require.NoError(t, err)
+
+		for i, r := range records {
+			resp, err := stream.Recv()
+			require.NoError(t, err)
+			// Equal compares values, not memory address
+			require.Equal(t, resp.Record, &api.Record{
+				Value:  r.Value,
+				Offset: uint64(i),
+			})
+		}
+	}
+
+}
 
 func setupTest(t *testing.T, fn func(*Config)) (
 	client api.LogClient,
