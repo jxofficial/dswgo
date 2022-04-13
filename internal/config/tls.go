@@ -20,6 +20,7 @@ func SetupTLSConfig(cfg TLSConfig) (*tls.Config, error) {
 	var err error
 	tlsConfig := &tls.Config{}
 
+	// only server will have these two files
 	if cfg.CertFile != "" && cfg.KeyFile != "" {
 		tlsConfig.Certificates = make([]tls.Certificate, 1)
 		tlsConfig.Certificates[0], err = tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)

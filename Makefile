@@ -25,5 +25,6 @@ compile:
 	--go-grpc_opt=paths=source_relative \
 	--proto_path=.
 
+.PHONY: test
 test:
 	go test -race ./...
