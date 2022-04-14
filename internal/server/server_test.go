@@ -134,8 +134,7 @@ func setupTest(t *testing.T, fn func(*Config)) (
 		KeyFile:       config.ServerKeyFile,
 		CAFile:        config.CAFile,
 		ServerAddress: listener.Addr().String(),
-		// keep IsServer false for now as we haven't implemented authentication of client (mutual TLS authentication)
-		// IsServer: true,
+		IsServer:      true,
 	})
 	require.NoError(t, err)
 	serverCreds := credentials.NewTLS(serverTLSConfig)
@@ -159,8 +158,11 @@ func setupTest(t *testing.T, fn func(*Config)) (
 	}()
 
 	clientTLSConfig, err := config.SetupTLSConfig(config.TLSConfig{
-		// as the client, you only need access to the CA to verify the server's certificate.
-		CAFile:   config.CAFile,
+		// as the client, you only need access to the CA to verify the server's certificate
+		CAFile: config.CAFile,
+		// cert and key file are added to the CA that the server and authenticate the client
+		CertFile: config.FakeClientCertFile,
+		KeyFile:  config.FakeClientKeyFile,
 		IsServer: false, // specify this for clarity
 	})
 	require.NoError(t, err)
