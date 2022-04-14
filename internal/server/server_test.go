@@ -161,8 +161,8 @@ func setupTest(t *testing.T, fn func(*Config)) (
 		// as the client, you only need access to the CA to verify the server's certificate
 		CAFile: config.CAFile,
 		// cert and key file are added to the CA that the server and authenticate the client
-		CertFile: config.FakeClientCertFile,
-		KeyFile:  config.FakeClientKeyFile,
+		CertFile: config.ClientCertFile,
+		KeyFile:  config.ClientKeyFile,
 		IsServer: false, // specify this for clarity
 	})
 	require.NoError(t, err)
